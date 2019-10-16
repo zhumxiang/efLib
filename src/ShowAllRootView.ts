@@ -1,8 +1,8 @@
 namespace cglib {
     export class ShowAllRootView extends eui.Group implements egret.sys.IScreenAdapter {
         private static _ins: ShowAllRootView;
-        public static get instance() {
-            return this._ins;
+        public static getInstance() {
+            return ShowAllRootView._ins;
         }
 
         private upMask = new eui.Rect();
