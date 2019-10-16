@@ -1,4 +1,4 @@
-namespace cglib {
+namespace cglib.ui {
     export class ShowAllRootView extends eui.Group implements egret.sys.IScreenAdapter {
         private static _ins: ShowAllRootView;
         public static getInstance() {

@@ -1,4 +1,4 @@
-namespace cglib {
+namespace cglib.sound {
     export class SoundMgr {
         private static cache = {};
 
