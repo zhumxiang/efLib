@@ -1,0 +1,16 @@
+{
+    "compilerOptions": {
+        "target": "es5",
+		"declaration": true,
+        "lib": [
+            "es5",
+            "dom",
+            "es2015.promise"
+        ],
+		"outFile": "bin/cglib.js"
+    },
+    "include": [
+        "src",
+        "libs"
+    ]
+}
