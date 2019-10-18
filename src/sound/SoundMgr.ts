@@ -9,6 +9,38 @@ namespace cglib.sound {
             return this._isOnPause;
         }
 
+        private static _mute = false;
+        public static set mute(value: boolean) {
+            if (this._mute != value) {
+                this._mute = value;
+                if (value) {
+                    if (!this._isOnPause) {
+                        this.onPause();
+                        this._isOnPause = false;
+                    }
+                } else {
+                    if (!this._isOnPause) {
+                        this.onResume();
+                    }
+                }
+            }
+        }
+
+        private static effArr = [] as egret.SoundChannel[];
+        private static clearEff() {
+            while (this.effArr.length > 0) {
+                this.effArr[0].stop();
+            }
+        }
+        private static removeEff(sc: egret.SoundChannel) {
+            for (let i = 0, n = this.effArr.length; i < n; ++i) {
+                if (this.effArr[i] == sc) {
+                    this.effArr.splice(i, 1);
+                    break;
+                }
+            }
+        }
+
         public static playBG(file: string) {
             if (this.soundBG != null && this.curBgFile == file) {
                 return;
@@ -27,10 +59,23 @@ namespace cglib.sound {
         }
 
         public static playEffect(file: string, loops?: number): egret.SoundChannel {
-            return this.play(file, 0, loops || 1);
+            let sc = this.play(file, 0, loops === undefined ? 1 : loops);
+            if (sc) {
+                this.effArr.push(sc);
+                let sc_stop = sc.stop;
+                sc.stop = () => {
+                    this.removeEff(sc);
+                    sc_stop.call(sc);
+                };
+                sc.addEventListener(egret.Event.SOUND_COMPLETE, () => this.removeEff(sc), null);
+            }
+            return sc
         }
 
         private static play(file: string, startTime?: number, loops?: number, asBG?: boolean): egret.SoundChannel {
+            if (this._mute || this._isOnPause) {
+                return;
+            }
             let sound = this.load(file);
             if (sound != null) {
                 sound.type = asBG ? egret.Sound.MUSIC : egret.Sound.EFFECT;
@@ -57,6 +102,7 @@ namespace cglib.sound {
                 this.soundBG.stop();
                 this.soundBG = null;
             }
+            this.clearEff();
         }
 
         public static onResume() {
