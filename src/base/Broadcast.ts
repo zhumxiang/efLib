@@ -27,8 +27,7 @@ namespace cglib.base {
                 thisObj,
             });
             if (thisObj && !this._remover[thisObj.hashCode]) {
-                let remover = () => this.off(thisObj);
-                this._remover[thisObj.hashCode] = remover;
+                this._remover[thisObj.hashCode] = 1;
                 thisObj.addEventListener(egret.Event.REMOVED_FROM_STAGE, () => {
                     delete this._remover[thisObj.hashCode];
                     this.off(thisObj);
