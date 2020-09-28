@@ -8,6 +8,9 @@ namespace cglib.base {
         thisObj: egret.DisplayObject;
         killed: boolean;
     }
+    function timerItemSorter(a: TimerItem, b: TimerItem) {
+        return a.nextTime - b.nextTime;
+    }
     export class TimerManager {
         private static _instance = new TimerManager();
         static get instance() {
@@ -19,12 +22,17 @@ namespace cglib.base {
         private _updating = false;
         private _killCount = 0;
         private _remover = {};
+        private _dirtySort = false;
         constructor() {
             this._timer.addEventListener(egret.TimerEvent.TIMER, this.onTimer, this);
         }
         private onTimer() {
             this._updating = true;
             let now = egret.getTimer();
+            if (this._dirtySort) {
+                this._list.sort(timerItemSorter);
+                this._dirtySort = false;
+            }
             for (let i = 0; i < this._list.length; ++i) {
                 let item = this._list[i];
                 if (item.killed) {
@@ -46,6 +54,9 @@ namespace cglib.base {
                 }
                 item.nextTime = now + item.interval;
                 item.lastTime = now;
+                if (item.interval > 0) {
+                    this._dirtySort = true;
+                }
             }
             this._updating = false;
             while (this._listTmp.length > 0) {
@@ -85,14 +96,14 @@ namespace cglib.base {
         }
         stop(callback: TimerCallback, thisObj: egret.DisplayObject) {
             for (let item of this._listTmp) {
-                if ((item.callback == callback || callback == null) && item.thisObj == thisObj) {
+                if (!item.killed && (item.callback == callback || callback == null) && item.thisObj == thisObj) {
                     item.killed = true;
                     break;
                 }
             }
             for (let item of this._list) {
-                if ((item.callback == callback || callback == null) && item.thisObj == thisObj) {
-                    ++this._killCount
+                if (!item.killed && (item.callback == callback || callback == null) && item.thisObj == thisObj) {
+                    ++this._killCount;
                     item.killed = true;
                     break;
                 }
@@ -100,26 +111,19 @@ namespace cglib.base {
         }
         private insert(newItem: TimerItem) {
             let list = this._updating ? this._listTmp : this._list;
-            let insertIndex = list.length;
             for (let i = 0; i < list.length; ++i) {
                 let item = list[i];
                 if (item.callback == newItem.callback && item.thisObj == newItem.thisObj) {
-                    list.splice(i--, 1);
-                    if (item.killed) {
+                    if (item.killed && list == this._list) {
                         --this._killCount;
                     }
-                    if (insertIndex == list.length + 1) {
-                        --insertIndex;
-                        continue;
-                    } else {
-                        break;
-                    }
-                }
-                if (insertIndex > i && item.nextTime > newItem.nextTime) {
-                    insertIndex = i;
+                    list[i] = newItem;
+                    this._dirtySort = true;
+                    return;
                 }
             }
-            list.splice(insertIndex, 0, newItem);
+            list.push(newItem);
+            this._dirtySort = true;
         }
     }
 }
