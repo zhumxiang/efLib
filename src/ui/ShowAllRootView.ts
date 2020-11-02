@@ -1,4 +1,12 @@
 namespace cglib.ui {
+    export type ShowAllScreenParam = {
+        minWidth?: number,
+        maxWidth?: number,
+        minHeight?: number,
+        maxHeight?: number,
+        topSafe?: number,
+        bottomSafe?: number,
+    }
     export class ShowAllRootView extends eui.Group implements egret.sys.IScreenAdapter {
         private static _ins: ShowAllRootView;
         public static getInstance() {
@@ -10,18 +18,16 @@ namespace cglib.ui {
         private leftMask = new eui.Rect();
         private rightMask = new eui.Rect();
 
-        private screenParam = {
-            minWidth: NaN,
-            maxWidth: NaN,
-            minHeight: NaN,
-            maxHeight: NaN,
-        }
-        public setScreenParam(minWidth: number, maxWidth: number, minHeight: number, maxHeight: number) {
-            this.screenParam.minWidth = minWidth;
-            this.screenParam.maxWidth = maxWidth;
-            this.screenParam.minHeight = minHeight;
-            this.screenParam.maxHeight = maxHeight;
-            if (this.stage) {
+        private screenParam: ShowAllScreenParam;
+        public setScreenParam(screenParam: ShowAllScreenParam) {
+            let changed = false;
+            for (let k in screenParam) {
+                if (this.screenParam[k] != screenParam[k]) {
+                    this.screenParam[k] = screenParam[k];
+                    changed = true;
+                }
+            }
+            if (changed && this.stage) {
                 this.onResize();
             }
         }
@@ -30,6 +36,16 @@ namespace cglib.ui {
             super();
 
             ShowAllRootView._ins = this;
+
+            this.screenParam = {};
+            this.setScreenParam({
+                minWidth: 720,
+                maxWidth: 720,
+                minHeight: 1280,
+                maxHeight: 1280,
+                topSafe: 0,
+                bottomSafe: 0,
+            });
 
             this.once(egret.Event.ADDED_TO_STAGE, this.onStageAdded, this);
         }
@@ -78,13 +94,22 @@ namespace cglib.ui {
             this.rightMask.y = 0;
             this.rightMask.width = this.x;
             this.rightMask.height = this.stage.stageHeight;
+
+            if (this.screenParam.topSafe) {
+                this.y += this.screenParam.topSafe;
+                this.height -= this.screenParam.topSafe;
+            }
+            if (this.screenParam.bottomSafe) {
+                this.height -= this.screenParam.bottomSafe;
+            }
         }
 
         calculateStageSize(scaleMode: string, screenWidth: number, screenHeight: number, contentWidth: number, contentHeight: number): egret.sys.StageDisplaySize {
             const minWidth = this.screenParam.minWidth;
-            const maxWidth = this.screenParam.maxWidth;
-            const minHeight = this.screenParam.minHeight;
-            const maxHeight = this.screenParam.maxHeight;
+            const maxWidth = Math.max(this.screenParam.maxWidth, minWidth);
+            //最小高度再加上安全距离，免得实际高度小于设计最小高度
+            const minHeight = this.screenParam.minHeight + this.screenParam.topSafe + this.screenParam.bottomSafe;
+            const maxHeight = Math.max(this.screenParam.maxHeight, minHeight);
 
             let stageWidth = contentWidth;
             let stageHeight = contentHeight;
