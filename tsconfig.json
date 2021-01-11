@@ -7,7 +7,7 @@
             "dom",
             "es2015.promise"
         ],
-		"outFile": "bin/cglib.js"
+		"outFile": "bin/eflib.js"
     },
     "include": [
         "src",

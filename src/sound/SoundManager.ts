@@ -1,5 +1,5 @@
-namespace cglib.sound {
-    export class SoundMgr {
+namespace eflib.sound {
+    export class SoundManager {
         private static cache = {};
 
         private static soundBG: egret.SoundChannel = null;

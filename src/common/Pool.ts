@@ -1,4 +1,4 @@
-namespace cglib.base {
+namespace eflib {
     export interface IPoolRecycleAble {
         $onPoolRecycle(): void;
     }

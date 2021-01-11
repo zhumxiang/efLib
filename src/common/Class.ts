@@ -1,4 +1,4 @@
-namespace cglib.base {
+namespace eflib {
     export interface Class<T> {
         new(...params: any[]): T;
     }

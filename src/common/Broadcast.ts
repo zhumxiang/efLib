@@ -1,4 +1,4 @@
-namespace cglib.base {
+namespace eflib {
     type ListenerInfo = {
         listener: (...data: any[]) => void,
         thisObj: egret.DisplayObject,

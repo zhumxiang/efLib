@@ -1,16 +1,25 @@
-namespace cglib.ui {
+namespace eflib.ui {
+    /** ShowAll参数 */
     export type ShowAllScreenParam = {
+        /** 最小宽度 */
         minWidth?: number,
+        /** 最大宽度 */
         maxWidth?: number,
+        /** 最小高度 */
         minHeight?: number,
+        /** 最大高度 */
         maxHeight?: number,
+        /** 顶部安全距离 */
         topSafe?: number,
+        /** 底部安全距离 */
         bottomSafe?: number,
     }
+    /** ShowAll根节点 */
     export class ShowAllRootView extends eui.Group implements egret.sys.IScreenAdapter {
         private static _ins: ShowAllRootView;
-        public static getInstance() {
-            return ShowAllRootView._ins;
+        public static getInstance<T extends ShowAllRootView>(this: Class<T>) {
+            //由于白鹭的编译器处理继承时对static变量处理有问题，这里不能用this获取
+            return ShowAllRootView._ins as T;
         }
 
         private upMask = new eui.Rect();
@@ -19,6 +28,10 @@ namespace cglib.ui {
         private rightMask = new eui.Rect();
 
         private screenParam: ShowAllScreenParam;
+        /**
+         * 设置宽高参数
+         * @param screenParam 参数
+         */
         public setScreenParam(screenParam: ShowAllScreenParam) {
             let changed = false;
             for (let k in screenParam) {
