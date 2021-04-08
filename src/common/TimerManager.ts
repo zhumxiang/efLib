@@ -14,11 +14,13 @@ namespace eflib {
         /** 回调函数 */
         callback: TimerCallback;
         /** 回调函数thisArg */
-        thisObj: egret.DisplayObject;
+        thisArg: any;
+        /** 生命周期关联对象 */
+        bindObj: egret.DisplayObject;
         /** 是否标记为关闭 */
         killed: boolean;
     }
-    /** 全局定时器 */
+    /** 定时器 */
     export class TimerManager {
         private static _instance = new TimerManager();
         /** 获取默认实例 */
@@ -42,7 +44,7 @@ namespace eflib {
         }
 
         /** 定时器内部回调 */
-        private onTimer() {
+        private onTimer(): void {
             this._updating = true;
             let now = egret.getTimer();
             //存储一下时间轴比例，避免updating过程中被修改
@@ -57,7 +59,7 @@ namespace eflib {
                 if (item.currentTime < item.nextTime) {
                     continue;
                 }
-                item.callback.call(item.thisObj, item.currentTime - item.lastTime);
+                item.callback.call(item.thisArg, item.currentTime - item.lastTime);
                 if (isNaN(item.interval)) {
                     this._list.splice(i--, 1);
                     continue;
@@ -80,13 +82,14 @@ namespace eflib {
         /**
          * 启动一个定时器任务
          * @param callback 回调函数
-         * @param thisObj 回调this
-         * @param delay 首次执行延迟时间，单位毫秒
-         * @param interval 循环执行间隔时间，单位毫秒，传NaN表示不循环
+         * @param bindObj 生命周期关联对象
+         * @param thisArg 回调this，不传则为bindObj
+         * @param delay 首次执行延迟时间，单位毫秒，默认为0
+         * @param interval 循环执行间隔时间，单位毫秒，传NaN表示不循环，默认为0
          */
-        start(callback: TimerCallback, thisObj: egret.DisplayObject, delay: number, interval: number) {
-            if (thisObj && !thisObj.stage) {
-                throw 'you should add listener after object added to stage'
+        start(callback: TimerCallback, bindObj: egret.DisplayObject, thisArg: any = bindObj, delay = 0, interval = 0): TimerCallback {
+            if (bindObj && !bindObj.stage) {
+                throw 'you should add listener after bindObj added to stage';
             }
             let now = egret.getTimer();
             let newItem: TimerTask = {
@@ -95,17 +98,18 @@ namespace eflib {
                 currentTime: now,
                 interval: interval,
                 callback: callback,
-                thisObj: thisObj,
+                thisArg: thisArg,
+                bindObj: bindObj,
                 killed: false,
             };
             this.insert(newItem);
             this._timer.start();
 
-            if (thisObj && !this._remover[thisObj.hashCode]) {
-                this._remover[thisObj.hashCode] = 1;
-                thisObj.addEventListener(egret.Event.REMOVED_FROM_STAGE, () => {
-                    delete this._remover[thisObj.hashCode];
-                    this.stop(null, thisObj);
+            if (bindObj && !this._remover[bindObj.hashCode]) {
+                this._remover[bindObj.hashCode] = 1;
+                bindObj.addEventListener(egret.Event.REMOVED_FROM_STAGE, () => {
+                    delete this._remover[bindObj.hashCode];
+                    this.stop(null, thisArg);
                 }, null);
             }
             return callback;
@@ -114,17 +118,17 @@ namespace eflib {
         /**
          * 停止一个定时器任务
          * @param callback 回调函数
-         * @param thisObj 回调this
+         * @param thisArg 回调this
          */
-        stop(callback: TimerCallback, thisObj: egret.DisplayObject) {
+        stop(callback: TimerCallback, thisArg: any): void {
             for (let item of this._listTmp) {
-                if (!item.killed && (item.callback == callback || callback == null) && item.thisObj == thisObj) {
+                if (!item.killed && (item.callback == callback || callback == null) && item.thisArg == thisArg) {
                     item.killed = true;
                     break;
                 }
             }
             for (let item of this._list) {
-                if (!item.killed && (item.callback == callback || callback == null) && item.thisObj == thisObj) {
+                if (!item.killed && (item.callback == callback || callback == null) && item.thisArg == thisArg) {
                     item.killed = true;
                     break;
                 }
@@ -135,11 +139,11 @@ namespace eflib {
          * 插入一个定时器任务
          * @param newItem 定时器任务
          */
-        private insert(newItem: TimerTask) {
+        private insert(newItem: TimerTask): void {
             let list = this._updating ? this._listTmp : this._list;
             for (let i = 0; i < list.length; ++i) {
                 let item = list[i];
-                if (item.callback == newItem.callback && item.thisObj == newItem.thisObj) {
+                if (item.callback == newItem.callback && item.thisArg == newItem.thisArg) {
                     list[i] = newItem;
                     return;
                 }
