@@ -2,15 +2,15 @@ namespace eflib {
     /** 监听信息 */
     type ListenerInfo = {
         /** 回调函数 */
-        listener: (...data: any[]) => void,
+        listener: (data: any) => void,
         /** 回调函数this */
         thisArg: any,
         /** 生命周期关联对象 */
         bindObj: egret.DisplayObject,
     }
     /** 广播器 */
-    export class Broadcast {
-        private static _instance = new Broadcast();
+    export class Broadcast<MessageDef> {
+        private static _instance = new Broadcast<unknown>();
         static get instance() {
             return this._instance;
         }
@@ -25,7 +25,8 @@ namespace eflib {
          * @param thisArg 回调函数this，不传则为bindObj
          * @returns 
          */
-        on(key: string, listener: (...data: any[]) => void, bindObj: egret.DisplayObject, thisArg: any = bindObj): void {
+        on<T extends keyof MessageDef>(key: T, listener: (data?: MessageDef[T]) => void, bindObj: egret.DisplayObject, thisArg?: any): void;
+        on(key: string, listener: (data?: any) => void, bindObj: egret.DisplayObject, thisArg: any = bindObj): void {
             if (bindObj && !bindObj.stage) {
                 throw 'you should add listener after bindObj added to stage';
             }
@@ -71,12 +72,13 @@ namespace eflib {
          * @param key 广播名
          * @param data 自定义数据
          */
-        dispatch(key: string, ...data: any[]): void {
+        dispatch<T extends keyof MessageDef>(key: T, data?: MessageDef[T]): void;
+        dispatch(key: string, data?: any): void {
             let list = this._map[key];
             if (list) {
                 let tmp = list.length > 1 ? [...list] : list;
                 for (let info of tmp) {
-                    info.listener.apply(info.thisArg, data);
+                    info.listener.call(info.thisArg, data);
                 }
             }
         }
