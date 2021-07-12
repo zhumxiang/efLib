@@ -14,7 +14,7 @@ namespace eflib {
         /** 回调函数 */
         callback: TimerCallback;
         /** 回调函数thisArg */
-        thisArg: any;
+        thisArg: object;
         /** 生命周期关联对象 */
         bindObj: egret.DisplayObject;
         /** 是否标记为关闭 */
@@ -87,9 +87,18 @@ namespace eflib {
          * @param delay 首次执行延迟时间，单位毫秒，默认为0
          * @param interval 循环执行间隔时间，单位毫秒，传NaN表示不循环，默认为0
          */
-        start(callback: TimerCallback, bindObj: egret.DisplayObject, thisArg: any = bindObj, delay = 0, interval = 0): TimerCallback {
+        start(callback: TimerCallback, bindObj: egret.DisplayObject, thisArg?: object, delay?: number, interval?: number): TimerCallback;
+        start(callback: TimerCallback, bindObj: egret.DisplayObject, delay?: number, interval?: number): TimerCallback;
+        start(callback: TimerCallback, bindObj: egret.DisplayObject, thisArg?: object | number, delay = 0, interval = 0): TimerCallback {
             if (bindObj && !bindObj.stage) {
                 throw 'you should add listener after bindObj added to stage';
+            }
+            if (thisArg === void 0) {
+                thisArg = bindObj;
+            } else if (typeof thisArg == 'number') {
+                interval = delay;
+                delay = thisArg;
+                thisArg = bindObj;
             }
             let now = egret.getTimer();
             let newItem: TimerTask = {
@@ -109,7 +118,7 @@ namespace eflib {
                 this._remover[bindObj.hashCode] = 1;
                 bindObj.addEventListener(egret.Event.REMOVED_FROM_STAGE, () => {
                     delete this._remover[bindObj.hashCode];
-                    this.stop(null, thisArg);
+                    this.stop(null, thisArg as object);
                 }, null);
             }
             return callback;
@@ -120,7 +129,7 @@ namespace eflib {
          * @param callback 回调函数
          * @param thisArg 回调this
          */
-        stop(callback: TimerCallback, thisArg: any): void {
+        stop(callback: TimerCallback, thisArg: object): void {
             for (let item of this._listTmp) {
                 if (!item.killed && (item.callback == callback || callback == null) && item.thisArg == thisArg) {
                     item.killed = true;
