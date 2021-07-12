@@ -76,7 +76,7 @@ namespace eflib {
         dispatch(key: string, data?: any): void {
             let list = this._map[key];
             if (list) {
-                let tmp = list.length > 1 ? [...list] : list;
+                let tmp = [...list];
                 for (let info of tmp) {
                     info.listener.call(info.thisArg, data);
                 }
