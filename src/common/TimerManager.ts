@@ -35,8 +35,6 @@ namespace eflib {
         private _listTmp = [] as TimerTask[];
         /** 是否正在触发定时器 */
         private _updating = false;
-        /** 对象和移除函数的集合，当对象被移出舞台时，自动移除定时器 */
-        private _remover = {};
         /** 定时器时间轴比例 */
         public timeScale = 1;
         constructor() {
@@ -49,10 +47,11 @@ namespace eflib {
             let now = egret.getTimer();
             //存储一下时间轴比例，避免updating过程中被修改
             let scale = this.timeScale;
-            for (let i = 0; i < this._list.length; ++i) {
-                let item = this._list[i];
+            for (let item of this._list) {
                 if (item.killed) {
-                    this._list.splice(i--, 1);
+                    continue;
+                }
+                if (item.bindObj && !item.bindObj.stage) {
                     continue;
                 }
                 item.currentTime += (now - item.currentTime) * scale;
@@ -61,11 +60,20 @@ namespace eflib {
                 }
                 item.callback.call(item.thisArg, item.currentTime - item.lastTime);
                 if (isNaN(item.interval)) {
-                    this._list.splice(i--, 1);
+                    item.killed = true;
                     continue;
                 }
                 item.nextTime = now + item.interval;
                 item.lastTime = now;
+            }
+            for (let i = this._list.length - 1; i >= 0; --i) {
+                let item = this._list[i];
+                if (item.killed) {
+                    this._list.splice(i, 1);
+                } else if (item.bindObj && !item.bindObj.stage) {
+                    this._list.splice(i, 1);
+                    this.insert(item);
+                }
             }
             this._updating = false;
             while (this._listTmp.length > 0) {
@@ -90,9 +98,6 @@ namespace eflib {
         start(callback: TimerCallback, bindObj: egret.DisplayObject, thisArg?: object, delay?: number, interval?: number): TimerCallback;
         start(callback: TimerCallback, bindObj: egret.DisplayObject, delay?: number, interval?: number): TimerCallback;
         start(callback: TimerCallback, bindObj: egret.DisplayObject, thisArg?: object | number, delay = 0, interval = 0): TimerCallback {
-            if (bindObj && !bindObj.stage) {
-                throw 'you should add listener after bindObj added to stage';
-            }
             if (thisArg === void 0) {
                 thisArg = bindObj;
             } else if (typeof thisArg == 'number') {
@@ -113,14 +118,6 @@ namespace eflib {
             };
             this.insert(newItem);
             this._timer.start();
-
-            if (bindObj && !this._remover[bindObj.hashCode]) {
-                this._remover[bindObj.hashCode] = 1;
-                bindObj.addEventListener(egret.Event.REMOVED_FROM_STAGE, () => {
-                    delete this._remover[bindObj.hashCode];
-                    this.stop(null, thisArg as object);
-                }, null);
-            }
             return callback;
         }
 
@@ -149,6 +146,12 @@ namespace eflib {
          * @param newItem 定时器任务
          */
         private insert(newItem: TimerTask): void {
+            if (newItem.bindObj && !newItem.bindObj.stage) {
+                newItem.bindObj.addEventListener(egret.Event.ADDED_TO_STAGE, () => {
+                    this.insert(newItem);
+                }, null);
+                return;
+            }
             let list = this._updating ? this._listTmp : this._list;
             for (let i = 0; i < list.length; ++i) {
                 let item = list[i];
