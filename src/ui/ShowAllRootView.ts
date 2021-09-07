@@ -115,6 +115,12 @@ namespace eflib.ui {
             if (this.screenParam.bottomSafe) {
                 this.height -= this.screenParam.bottomSafe;
             }
+            TimerManager.instance.start(this.printScreenInfo, null, this, 300, NaN);
+        }
+
+        private printScreenInfo() {
+            console.log(`stage[${this.stage.stageWidth}, ${this.stage.stageHeight}], main[${this.explicitWidth}, ${this.explicitHeight}]`);
+            console.log(`safeArea[${this.screenParam.topSafe}, ${this.screenParam.bottomSafe}]`);
         }
 
         calculateStageSize(scaleMode: string, screenWidth: number, screenHeight: number, contentWidth: number, contentHeight: number): egret.sys.StageDisplaySize {
