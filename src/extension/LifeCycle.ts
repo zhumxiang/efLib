@@ -21,11 +21,7 @@ namespace eflib {
         onExit() { }
         $onAddToStage(stage: egret.Stage, nestLevel: number) {
             $onAddToStage.call(this, stage, nestLevel);
-            if (this.visible && !this.parent.visible) {
-                this.visibleInHierarchy
-            }
             updateVisible(this, void 0, false);
-            this.onVisibleInHierarchyChanged();
             this.addEventListener(egret.Event.ADDED_TO_STAGE, this.onEnter, this);
             this.addEventListener(egret.Event.REMOVED_FROM_STAGE, this.onExit, this);
         }
