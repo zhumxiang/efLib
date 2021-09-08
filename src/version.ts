@@ -1,3 +1,3 @@
 namespace eflib{
-    export const version = "1.0.5";
+    export const version = "1.0.6";
 }
