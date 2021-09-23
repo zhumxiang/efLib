@@ -7,12 +7,15 @@ namespace eflib {
         private resolve: (data: any) => void;
         private reject: (data: any) => void;
         private itrList: Generator[];
+        private bindObj: egret.DisplayObject;
         /**
          * @param itr 协程迭代器
+         * @param bindObj 绑定对象生命周期
          * @param startImmediate 是否立即执行协程，默认true
          */
-        constructor(itr: Generator, startImmediate = true) {
+        constructor(itr: Generator, bindObj: egret.DisplayObject, startImmediate = true) {
             this.itrList = [itr];
+            this.bindObj = bindObj;
             this.promise = new Promise((resolve, reject) => {
                 this.resolve = resolve;
                 this.reject = reject;
@@ -31,7 +34,8 @@ namespace eflib {
         }
         /** 停止协程 */
         stop() {
-            if (this.runFlag < 0) {
+            if (this.runFlag <= 0) {
+                --this.runFlag;
                 return;
             }
             this.runFlag = -this.runFlag;
@@ -44,6 +48,16 @@ namespace eflib {
                     return;
                 }
                 while (runFlag == this.runFlag) {
+                    if (this.bindObj && !this.bindObj.stage) {
+                        this.stop();
+                        runFlag = this.runFlag;
+                        this.bindObj.once(egret.Event.ADDED_TO_STAGE, () => {
+                            if (runFlag == this.runFlag) {
+                                this.start();
+                            }
+                        }, null);
+                        return;
+                    }
                     let ret = itr.next(this.lastValue);
                     if (ret.done) {
                         this.itrList.pop();
