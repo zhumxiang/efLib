@@ -35,6 +35,31 @@ namespace eflib.sound {
             }
         }
 
+        private static _volume = 1;
+        public static get volume() {
+            return this._volume;
+        }
+        public static set volume(value: number) {
+            this._volume = value;
+            if (this.soundBG) {
+                if (ORIGIN_VOLUME in this.soundBG) {
+                    this.soundBG[ORIGIN_VOLUME] = value;
+                } else {
+                    this.soundBG.volume = value;
+                }
+            }
+            for (let key in this.allEffect) {
+                let list = this.allEffect[key];
+                for (let channel of list) {
+                    if (ORIGIN_VOLUME in channel) {
+                        channel[ORIGIN_VOLUME] = value;
+                    } else {
+                        channel.volume = value;
+                    }
+                }
+            }
+        }
+
         private static _muteMusic = false;
         /** 背景音乐是否静音 */
         static get muteMusic() {
