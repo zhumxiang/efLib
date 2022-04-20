@@ -227,6 +227,7 @@ namespace eflib.sound {
                     }
                     sound.type = egret.Sound.MUSIC;
                     let sc = sound.play(startTime, loops);
+                    sc.volume = this._bgVolume;
                     if (this._muteMusic) {
                         this.muteOne(sc);
                     }
@@ -242,6 +243,7 @@ namespace eflib.sound {
                     }
                     sound.type = egret.Sound.EFFECT;
                     let sc = sound.play(startTime, loops);
+                    sc.volume = this._effVolume;
                     list.push(sc);
                     let sc_stop = sc.stop;
                     sc.stop = () => {
