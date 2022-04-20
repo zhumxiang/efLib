@@ -9,7 +9,7 @@ namespace eflib.sound {
         private static allEffect = {} as { [key: string]: egret.SoundChannel[] };
         /** 是否暂停中（退到后台） */
         private static _isOnPause = false;
-        /** 背景音暂停时的位置 */
+        /** 背景音暂停时的位置，暂时无效 */
         private static bgPausePosition = 0;
 
         private static _inited = false;
@@ -98,14 +98,16 @@ namespace eflib.sound {
         /**
          * 播放背景音乐，如果当前正在播放相同音乐则忽略
          * @param file 音频资源名
+         * @param startTime 起始位置
          * @returns 
          */
-        static playBG(file: string): Promise<egret.SoundChannel> {
+        static playBG(file: string, startTime = 0): Promise<egret.SoundChannel> {
+            this.bgPausePosition = 0;
             if (this.soundBG && this.curBgFile == file) {
                 return Promise.resolve(null);
             }
             this.stopBG();
-            return this._playBG(file, 0);
+            return this._playBG(file, startTime);
         }
 
         /**
@@ -116,10 +118,10 @@ namespace eflib.sound {
         private static _playBG(file: string, startTime: number): Promise<egret.SoundChannel> {
             this.curBgFile = file;
             this.soundBG = null;
-            this.bgPausePosition = 0;
             if (!file) {
                 return Promise.resolve(null);
             }
+            startTime = 0;//egret设置声音起始位置播放会导致循环也从该位置开始，所以暂不实现
             return this.playAsync(file, startTime, 0, true, 0);
         }
 
@@ -141,9 +143,10 @@ namespace eflib.sound {
             }
         }
 
+        /** 恢复背景音乐 */
         static resumeBG(): void {
-            if(!this.soundBG){
-                this._playBG(this.curBgFile, this.bgPausePosition);
+            if (!this.soundBG && this.curBgFile) {
+                this.playBG(this.curBgFile, this.bgPausePosition);
             }
         }
 
@@ -240,8 +243,10 @@ namespace eflib.sound {
 
         /** 回到前台事件处理 */
         private static onResume(): void {
-            this._isOnPause = false;
-            this._playBG(this.curBgFile, this.bgPausePosition);
+            if (this._isOnPause) {
+                this._isOnPause = false;
+                this.playBG(this.curBgFile, this.bgPausePosition);
+            }
         }
     }
 }
