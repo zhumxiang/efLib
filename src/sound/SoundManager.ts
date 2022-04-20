@@ -35,12 +35,12 @@ namespace eflib.sound {
             }
         }
 
-        private static _volume = 1;
-        public static get volume() {
-            return this._volume;
+        private static _bgVolume = 1;
+        public static get bgVolume() {
+            return this._bgVolume;
         }
-        public static set volume(value: number) {
-            this._volume = value;
+        public static set bgVolume(value: number) {
+            this._bgVolume = value;
             if (this.soundBG) {
                 if (ORIGIN_VOLUME in this.soundBG) {
                     this.soundBG[ORIGIN_VOLUME] = value;
@@ -48,6 +48,13 @@ namespace eflib.sound {
                     this.soundBG.volume = value;
                 }
             }
+        }
+        private static _effVolume = 1;
+        public static get effVolume() {
+            return this._effVolume;
+        }
+        public static set effVolume(value: number) {
+            this._effVolume = value;
             for (let key in this.allEffect) {
                 let list = this.allEffect[key];
                 for (let channel of list) {
