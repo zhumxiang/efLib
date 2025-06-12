@@ -30,7 +30,7 @@ namespace eflib.sound {
         }
         private static unMuteOne(sc: egret.SoundChannel): void {
             if (ORIGIN_VOLUME in sc) {
-                sc.volume = sc[ORIGIN_VOLUME];
+                sc.volume = sc[ORIGIN_VOLUME] as number;
                 delete sc[ORIGIN_VOLUME];
             }
         }
