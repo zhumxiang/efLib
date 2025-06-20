@@ -41,7 +41,7 @@ namespace eflib.ui {
                 }
             }
             if (changed && this.stage) {
-                this.onResize();
+                this.stage.setContentSize(this.stage.stageWidth, this.stage.stageHeight);
             }
         }
 
