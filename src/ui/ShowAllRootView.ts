@@ -10,9 +10,9 @@ namespace eflib.ui {
         /** 最大高度 */
         maxHeight?: number,
         /** 顶部安全距离 */
-        topSafe?: number,
+        screenTopSafe?: number,
         /** 底部安全距离 */
-        bottomSafe?: number,
+        screenBottomSafe?: number,
     }
     /** ShowAll根节点 */
     export class ShowAllRootView extends eui.Group implements egret.sys.IScreenAdapter {
@@ -28,6 +28,14 @@ namespace eflib.ui {
         private rightMask = new eui.Rect();
 
         private screenParam: ShowAllScreenParam;
+        private _stageTopSafe = 0;
+        public get stageTopSafe() {
+            return this._stageTopSafe;
+        }
+        private _stageBottomSafe = 0;
+        public get stageBottomSafe() {
+            return this._stageBottomSafe;
+        }
         /**
          * 设置宽高参数
          * @param screenParam 参数
@@ -56,8 +64,8 @@ namespace eflib.ui {
                 maxWidth: 720,
                 minHeight: 1280,
                 maxHeight: 1280,
-                topSafe: 0,
-                bottomSafe: 0,
+                screenTopSafe: 0,
+                screenBottomSafe: 0,
             });
 
             this.once(egret.Event.ADDED_TO_STAGE, this.onStageAdded, this);
@@ -84,7 +92,7 @@ namespace eflib.ui {
 
         private onResize() {
             this.width = Math.min(this.stage.stageWidth, this.screenParam.maxWidth);
-            this.height = Math.min(this.stage.stageHeight, this.screenParam.maxHeight);
+            this.height = Math.min(this.stage.stageHeight, this.screenParam.maxHeight + this.stageTopSafe + this.stageBottomSafe);
             this.x = (this.stage.stageWidth - this.width) / 2;
             this.y = (this.stage.stageHeight - this.height) / 2;
 
@@ -108,30 +116,34 @@ namespace eflib.ui {
             this.rightMask.width = this.x;
             this.rightMask.height = this.stage.stageHeight;
 
-            if (this.screenParam.topSafe) {
-                this.y += this.screenParam.topSafe;
-                this.height -= this.screenParam.topSafe;
+            if (this.stageTopSafe) {
+                this.y += this.stageTopSafe;
+                this.height -= this.stageTopSafe;
             }
-            if (this.screenParam.bottomSafe) {
-                this.height -= this.screenParam.bottomSafe;
+            if (this.stageBottomSafe) {
+                this.height -= this.stageBottomSafe;
             }
             TimerManager.instance.start(this.printScreenInfo, null, this, 300, NaN);
         }
 
         private printScreenInfo() {
-            console.log(`stage[${this.stage.stageWidth}, ${this.stage.stageHeight}], main[${this.explicitWidth}, ${this.explicitHeight}]`);
-            console.log(`safeArea[${this.screenParam.topSafe}, ${this.screenParam.bottomSafe}]`);
+            console.log(`stage[${this.stage.stageWidth}, ${this.stage.stageHeight}], main[${this.explicitWidth}, ${this.explicitHeight}], safeArea[${this.stageTopSafe}, ${this.stageBottomSafe}]`);
         }
 
         calculateStageSize(scaleMode: string, screenWidth: number, screenHeight: number, contentWidth: number, contentHeight: number): egret.sys.StageDisplaySize {
+            const displayWidth = screenWidth;
+            const displayHeight = screenHeight;
+            const topSafeRate = this.screenParam.screenTopSafe / screenHeight;
+            const bottomSafeRate = this.screenParam.screenBottomSafe / screenHeight;
+            //计算stage高度时先去掉安全距离，免得实际高度小于设计最小高度
+            screenHeight -= this.screenParam.screenTopSafe + this.screenParam.screenBottomSafe;
             const minWidth = this.screenParam.minWidth;
             const maxWidth = Math.max(this.screenParam.maxWidth, minWidth);
-            //最小高度再加上安全距离，免得实际高度小于设计最小高度
-            const minHeight = this.screenParam.minHeight + this.screenParam.topSafe + this.screenParam.bottomSafe;
+            const minHeight = this.screenParam.minHeight;
             const maxHeight = Math.max(this.screenParam.maxHeight, minHeight);
 
-            let stageWidth = contentWidth;
-            let stageHeight = contentHeight;
+            let stageWidth: number;
+            let stageHeight: number;
 
             let ratio = screenWidth / screenHeight;
             if (ratio >= maxWidth / minHeight) {
@@ -150,6 +162,11 @@ namespace eflib.ui {
                 }
                 stageWidth = Math.round(ratio * stageHeight);
             }
+            //补回安全距离
+            stageHeight = Math.round(stageHeight / (1 - topSafeRate - bottomSafeRate));
+            //缓存stage值
+            this._stageTopSafe = Math.round(stageHeight * topSafeRate);
+            this._stageBottomSafe = Math.round(stageHeight * bottomSafeRate);
 
             //宽高不是2的整数倍会导致图片绘制出现问题
             if (stageWidth % 2 != 0) {
@@ -162,8 +179,8 @@ namespace eflib.ui {
             return {
                 stageWidth: stageWidth,
                 stageHeight: stageHeight,
-                displayWidth: screenWidth,
-                displayHeight: screenHeight
+                displayWidth: displayWidth,
+                displayHeight: displayHeight,
             };
         }
     }
