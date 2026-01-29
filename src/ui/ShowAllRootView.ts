@@ -9,10 +9,10 @@ namespace eflib.ui {
         minHeight?: number,
         /** 最大高度 */
         maxHeight?: number,
-        /** 顶部安全距离 */
-        screenTopSafe?: number,
-        /** 底部安全距离 */
-        screenBottomSafe?: number,
+        /** 顶部安全距离占比 */
+        topSafeRate?: number,
+        /** 底部安全距离占比 */
+        bottomSafeRate?: number,
     }
     /** ShowAll根节点 */
     export class ShowAllRootView extends eui.Group implements egret.sys.IScreenAdapter {
@@ -64,8 +64,8 @@ namespace eflib.ui {
                 maxWidth: 720,
                 minHeight: 1280,
                 maxHeight: 1280,
-                screenTopSafe: 0,
-                screenBottomSafe: 0,
+                topSafeRate: 0,
+                bottomSafeRate: 0,
             });
 
             this.once(egret.Event.ADDED_TO_STAGE, this.onStageAdded, this);
@@ -133,10 +133,10 @@ namespace eflib.ui {
         calculateStageSize(scaleMode: string, screenWidth: number, screenHeight: number, contentWidth: number, contentHeight: number): egret.sys.StageDisplaySize {
             const displayWidth = screenWidth;
             const displayHeight = screenHeight;
-            const topSafeRate = this.screenParam.screenTopSafe / screenHeight;
-            const bottomSafeRate = this.screenParam.screenBottomSafe / screenHeight;
+            const topSafeRate = this.screenParam.topSafeRate;
+            const bottomSafeRate = this.screenParam.bottomSafeRate;
             //计算stage高度时先去掉安全距离，免得实际高度小于设计最小高度
-            screenHeight -= this.screenParam.screenTopSafe + this.screenParam.screenBottomSafe;
+            screenHeight *= 1 - topSafeRate - bottomSafeRate;
             const minWidth = this.screenParam.minWidth;
             const maxWidth = Math.max(this.screenParam.maxWidth, minWidth);
             const minHeight = this.screenParam.minHeight;
